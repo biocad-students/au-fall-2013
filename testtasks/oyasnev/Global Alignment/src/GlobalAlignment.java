@@ -4,13 +4,36 @@
  * Author: Oleg Yasnev
  */
 public class GlobalAlignment {
+    /**
+     * Strings for alignment and their lenghts respectively
+     */
     protected String s1, s2;
     protected int n, m;
+
+    /**
+     * Match scoring matrix
+     */
     protected IMatchScoreMatrix matchScoreMatrix;
+
+    /**
+     * Alignment score matrix
+     */
     protected int[][] matrix;
+
+    /**
+     * Gap
+     */
     protected char gapSymbol;
     protected int gapScore;
+
+    /**
+     * Max score after alignment
+     */
     protected int maxScore;
+
+    /**
+     * Two aligned string given by backtracing
+     */
     protected String[] backtraceStrings;
 
     /**

@@ -79,7 +79,7 @@ public class Blosum62 implements IMatchScoreMatrix {
         }
 
         gapScore = map.get("A" + gapSymbol);
-        // gap score is equal for every combination except two empty strings
+        // gap score is equal for any insertion or deletion
 
         in.close();
     }
