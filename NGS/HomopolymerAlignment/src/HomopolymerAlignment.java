@@ -5,37 +5,119 @@ import java.util.Date;
  * Date: 20.11.13
  */
 public class HomopolymerAlignment {
-    HomopolymerSequence[] sequences;
-    ScoreAlignmentFunction scoreFunction;
-    int[][] alignMatrix;
+    public int size;
+    public int[][] alignMatrix;
+    public int minScore;
+    public int maxScore;
 
-    public HomopolymerAlignment(HomopolymerSequence[] sequences, ScoreAlignmentFunction scoreFunction) {
-        this.sequences = sequences;
-        this.scoreFunction = scoreFunction;
-        align();
+    protected HomopolymerSequence[] sequences;
+    protected ScoreAlignmentFunction scoreFunction;
+
+    protected Out out;
+
+    protected int threadCount;
+
+    public HomopolymerAlignment(HomopolymerSequence[] sequences, ScoreAlignmentFunction scoreFunction, int threadCount) {
+        init(sequences, scoreFunction, threadCount);
+        align(false);
     }
 
-    protected void align() {
-        int n = sequences.length;
-        alignMatrix = new int[n][n];
-        StdOut.printf("Total sequences: %d (%s)\n", n, new Date());
-        // align self with self = 0
-        for (int i = 0; i < n; i++) {
-            alignMatrix[i][i] = 0;
+    public HomopolymerAlignment(HomopolymerSequence[] sequences, ScoreAlignmentFunction scoreFunction,
+                                String outputFilename, int threadCount) {
+        init(sequences, scoreFunction, threadCount);
+        this.out = new Out(outputFilename);
+        align(true);
+        out.close();
+    }
+
+    protected void init(HomopolymerSequence[] sequences, ScoreAlignmentFunction scoreFunction, int threadCount) {
+        this.sequences = sequences;
+        this.size = sequences.length;
+        this.scoreFunction = scoreFunction;
+        this.threadCount = threadCount;
+    }
+
+    protected void align(boolean largeMode) {
+        // init
+        StdOut.printf("Total sequences: %d (%s)\n", size, new Date());
+        maxScore = Integer.MIN_VALUE;
+        minScore = Integer.MAX_VALUE;
+
+        if (largeMode) {
+            alignLargeMode();
+        } else {
+            fillAlignMatrix();
         }
+    }
+
+    protected void fillAlignMatrix() {
+        alignMatrix = new int[size][size];
+
         // align only upper triangle
-        for (int i = 0; i < n; i++) {
-            for (int j = i; j < n; j++) {
-                alignMatrix[i][j] =
-                        alignPair(sequences[i].getHomopolymerSequence(), sequences[j].getHomopolymerSequence());
+        int i = 0;
+        Thread[] threads = new Thread[threadCount];
+        while (i < size) {
+            int end = Math.min(threadCount, size - i);
+            // start threads
+            for (int j = 0; j < end; j++) {
+                threads[j] = new Thread(
+                        new AlignThread(alignMatrix[i + j], sequences[i + j].getHomopolymerSequence(), i + j));
+                threads[j].start();
             }
-            StdOut.printf("Processed %d sequence(s) of %d (%s)\n", i + 1, n, new Date());
+            // waiting for all threads finished
+            for (int j = 0; j < end; j++) {
+                try {
+                    threads[j].join();
+                } catch (InterruptedException e) {}
+            }
+            // process results
+            for (int j = 0; j < end; j++) {
+                StdOut.printf("Processed %d sequence(s) of %d (%s)\n", i + j + 1, size, new Date());
+            }
+
+            i += end;
         }
+
         // copy to lower triangle
-        for (int i = 1; i < n; i++) {
+        for (i = 1; i < size; i++) {
             for (int j = 0; j < i; j++) {
                 alignMatrix[i][j] = alignMatrix[j][i];
             }
+        }
+    }
+
+    protected void alignLargeMode() {
+        int[][] alignMatrixRows = new int[threadCount][size];
+        Thread[] threads = new Thread[threadCount];
+
+        int i = 0;
+        while (i < size) {
+            int end = Math.min(threadCount, size - i);
+            // start threads
+            for (int j = 0; j < end; j++) {
+                threads[j] = new Thread(
+                        new AlignThread(alignMatrixRows[j], sequences[i + j].getHomopolymerSequence(), 0));
+                threads[j].start();
+            }
+            // waiting for all threads finished
+            for (int j = 0; j < end; j++) {
+                try {
+                    threads[j].join();
+                } catch (InterruptedException e) {}
+            }
+            // process results
+            for (int j = 0; j < end; j++) {
+                saveAlignRow(alignMatrixRows[j]);
+                StdOut.printf("Processed %d sequence(s) of %d (%s)\n", i + j + 1, size, new Date());
+            }
+
+            i += end;
+        }
+    }
+
+    protected void alignRow(int[] alignRow, Homopolymer[] seqFirst, int rowInd) {
+        for (int i = rowInd; i < size; i++) {
+            alignRow[i] = alignPair(seqFirst, sequences[i].getHomopolymerSequence());
         }
     }
 
@@ -98,6 +180,33 @@ public class HomopolymerAlignment {
             StdOut.println();
         }
 
-        return matrix[m][n];
+        score = matrix[m][n];
+        minScore = Math.min(minScore, score);
+        maxScore = Math.max(maxScore, score);
+        return score;
+    }
+
+    protected void saveAlignRow(int[] alignRow) {
+        for (int i = 0; i < size; i++) {
+            out.printf(" %d", alignRow[i]);
+        }
+        out.println();
+    }
+
+    protected class AlignThread implements Runnable {
+        protected int[] alignRow;
+        protected Homopolymer[] seqFirst;
+        protected int rowInd;
+
+        public AlignThread(int[] alignRow, Homopolymer[] seqFirst, int rowInd) {
+            this.alignRow = alignRow;
+            this.seqFirst = seqFirst;
+            this.rowInd = rowInd;
+        }
+
+        @Override
+        public void run() {
+            alignRow(alignRow, seqFirst, rowInd);
+        }
     }
 }

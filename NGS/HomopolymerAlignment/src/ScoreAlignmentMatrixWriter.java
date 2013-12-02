@@ -7,68 +7,81 @@ public class ScoreAlignmentMatrixWriter {
     protected HomopolymerSequence[] sequences;
     protected int size;
     protected int[][] alignMatrix;
-    protected double[][] distMatrix;
+    protected In scoreMatrixIn;
+    protected long scoreWidth;
 
-    public ScoreAlignmentMatrixWriter(String outputFilename, HomopolymerSequence[] sequences, int[][] scoreAlignmentMatrix) {
+    public ScoreAlignmentMatrixWriter(String outputFilename, HomopolymerSequence[] sequences,
+                                      int[][] scoreAlignmentMatrix, int minScore, int maxScore) {
+        init(outputFilename, sequences, minScore, maxScore);
+        alignMatrix = scoreAlignmentMatrix;
+        writePhylipFormat(false);
+    }
+
+    public ScoreAlignmentMatrixWriter(String outputFilename, HomopolymerSequence[] sequences,
+                                      String scoreAlignmentMatrixFilename, int minScore, int maxScore) {
+        init(outputFilename, sequences, minScore, maxScore);
+        scoreMatrixIn = new In(scoreAlignmentMatrixFilename);
+        writePhylipFormat(true);
+        scoreMatrixIn.close();
+    }
+
+    protected void init(String outputFilename, HomopolymerSequence[] sequences, int minScore, int maxScore) {
         this.out = new Out(outputFilename);
         this.sequences = sequences;
         this.size = sequences.length;
-        this.alignMatrix = scoreAlignmentMatrix;
+        if (minScore > 0) minScore = 0;
+        scoreWidth = maxScore - minScore;
     }
 
-    public void writePhylipFormat() {
-        buildDistMatrix();
-        saveToFile();
+    protected void writePhylipFormat(boolean largeMode) {
+        if (largeMode) {
+            saveDistMatrixRowsLargeMode();
+        } else {
+            saveDistMatrixRows();
+        }
     }
 
     /**
-     * Normalize and convert to distance matrix
+     * Save dist matrix to file row by row
      */
-    protected void buildDistMatrix() {
-        distMatrix = new double[size][size];
-
-        // find min and max values
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
+    protected void saveDistMatrixRows() {
+        out.println(size);
+        double[][] distMatrixRows = new double[1][size];
         for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                min = (min > alignMatrix[i][j]) ? alignMatrix[i][j] : min;
-                max = (max < alignMatrix[i][j]) ? alignMatrix[i][j] : max;
-            }
-        }
-        if (min > 0) {
-            min = 0;
-        }
-        long width = max - min;
-
-        // diagonal dist = 0
-        for (int i = 0; i < size; i++) {
-            distMatrix[i][i] = 0.0;
-        }
-
-        // calc only upper triangle
-        for (int i = 0; i < size; i++) {
-            for (int j = i + 1; j < size; j++) {
-                distMatrix[i][j] = 1.0 - alignMatrix[i][j] * 1.0 / width;
-            }
-        }
-
-        // copy to lower triangle
-        for (int i = 1; i < size; i++) {
-            for (int j = 0; j < i; j++) {
-                distMatrix[i][j] = distMatrix[j][i];
-            }
+            fillDistMatrixRow(distMatrixRows[0], alignMatrix[i], i);
+            saveDistMatrixRow(distMatrixRows[0], sequences[i]);
         }
     }
 
-    protected void saveToFile() {
+    protected void saveDistMatrixRowsLargeMode() {
         out.println(size);
+        double[][] distMatrixRows = new double[1][size];
+        int[][] alignMatrixRows = new int[1][size];
         for (int i = 0; i < size; i++) {
-            out.print(sequences[i].getDescription());
-            for (int j = 0; j < size; j++) {
-                out.printf(" %.6f", distMatrix[i][j]);
-            }
-            out.println();
+            readAlignMatrixRow(alignMatrixRows[0]);
+            fillDistMatrixRow(distMatrixRows[0], alignMatrixRows[0], i);
+            saveDistMatrixRow(distMatrixRows[0], sequences[i]);
+        }
+    }
+
+    protected void fillDistMatrixRow(double[] distMatrixRow, int[] alignMatrixRow, int rowInd) {
+        for (int i = 0; i < size; i++) {
+            distMatrixRow[i] = 1.0 - alignMatrixRow[i] * 1.0 / scoreWidth;
+        }
+        distMatrixRow[rowInd] = 0;  // diagonal dist = 0
+    }
+
+    protected void saveDistMatrixRow(double[] distMatrixRow, HomopolymerSequence seq) {
+        out.print(seq.getDescription());
+        for (int i = 0; i < size; i++) {
+            out.printf(" %.6f", distMatrixRow[i]);
+        }
+        out.println();
+    }
+
+    protected void readAlignMatrixRow(int[] alignRow) {
+        for (int i = 0; i < size; i++) {
+            alignRow[i] = scoreMatrixIn.readInt();
         }
     }
 }

@@ -8,6 +8,8 @@ public class ParamParser {
     public static final String OUTPUT_FILE_KEY  = "-o";
     public static final String SCORE_MATRIX_KEY = "--score-matrix";
     public static final String GAP_SCORE_KEY    = "--gap";
+    public static final String LARGE_MODE_KEY   = "--large";
+    public static final String THREADS_KEY      = "--threads";
 
     public boolean state = false;
 
@@ -15,6 +17,8 @@ public class ParamParser {
     public String outputFilename = "";
     public String scoreMatrixFilename = "ScoreMatrix.txt";
     public int gapScore = -4;
+    public boolean largeMode = false;
+    public int threadCount = 1;
 
     public ParamParser(String[] args) {
         if (args.length == 0 || args[1].equals("--help") || args[1].equals("?")) {
@@ -36,6 +40,11 @@ public class ParamParser {
             } else if (key.equals(GAP_SCORE_KEY)) {
                 i++;
                 gapScore = Integer.parseInt(args[i]);
+            } else if (key.equals(LARGE_MODE_KEY)) {
+                largeMode = true;
+            } else if (key.equals(THREADS_KEY)) {
+                i++;
+                threadCount = Integer.parseInt(args[i]);
             }
         }
 

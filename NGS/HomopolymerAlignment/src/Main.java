@@ -1,4 +1,6 @@
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Alignment with homopolymers
@@ -15,17 +17,38 @@ public class Main {
 
         HomopolymerSequenceFactory sequenceFactory = new HomopolymerSequenceFactory();
 
+        StdOut.printf("Reading data from %s (%s)\n", paramParser.inputFilename, new Date());
         Fasta fasta = new Fasta(paramParser.inputFilename, sequenceFactory);
         ArrayList<HomopolymerSequence> arList = (ArrayList<HomopolymerSequence>) fasta.getSequences();
         HomopolymerSequence[] sequences = new HomopolymerSequence[arList.size()];
         arList.toArray(sequences);
 
+        StdOut.printf("Alignment\n");
         ScoreMatrix scoreMatrix = new ScoreMatrix(paramParser.scoreMatrixFilename);
         ScoreAlignmentFunction scoreFunction = new ScoreAlignmentFunction(scoreMatrix, paramParser.gapScore);
-        HomopolymerAlignment alignment = new HomopolymerAlignment(sequences, scoreFunction);
+        if (paramParser.largeMode) {
+            String scoreMatrixFilename = "~" + paramParser.outputFilename + ".tmp";
 
-        ScoreAlignmentMatrixWriter writer = new ScoreAlignmentMatrixWriter(paramParser.outputFilename,
-                    sequences, alignment.alignMatrix);
-        writer.writePhylipFormat();
+            HomopolymerAlignment alignment = new HomopolymerAlignment(sequences, scoreFunction,
+                    scoreMatrixFilename, paramParser.threadCount);
+
+            StdOut.printf("Writing data to %s\n", paramParser.outputFilename);
+
+            ScoreAlignmentMatrixWriter writer = new ScoreAlignmentMatrixWriter(paramParser.outputFilename,
+                        sequences, scoreMatrixFilename, alignment.minScore, alignment.maxScore);
+
+            // remove temp score alignment matrix file
+            File file = new File(scoreMatrixFilename);
+            file.delete();
+        } else {
+            HomopolymerAlignment alignment = new HomopolymerAlignment(sequences, scoreFunction, paramParser.threadCount);
+
+            StdOut.printf("Writing data to %s\n", paramParser.outputFilename);
+
+            ScoreAlignmentMatrixWriter writer = new ScoreAlignmentMatrixWriter(paramParser.outputFilename,
+                    sequences, alignment.alignMatrix, alignment.minScore, alignment.maxScore);
+        }
+
+        StdOut.printf("Processing successfully finished!");
     }
 }
