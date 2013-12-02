@@ -1,3 +1,5 @@
+import java.util.Date;
+
 /**
  * Author: Oleg Yasnev (oyasnev@gmail.com)
  * Date: 20.11.13
@@ -16,16 +18,18 @@ public class HomopolymerAlignment {
     protected void align() {
         int n = sequences.length;
         alignMatrix = new int[n][n];
+        StdOut.printf("Total sequences: %d (%s)\n", n, new Date());
         // align self with self = 0
-        /*for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             alignMatrix[i][i] = 0;
-        }*/
+        }
         // align only upper triangle
         for (int i = 0; i < n; i++) {
             for (int j = i; j < n; j++) {
                 alignMatrix[i][j] =
                         alignPair(sequences[i].getHomopolymerSequence(), sequences[j].getHomopolymerSequence());
             }
+            StdOut.printf("Processed %d sequence(s) of %d (%s)\n", i + 1, n, new Date());
         }
         // copy to lower triangle
         for (int i = 1; i < n; i++) {
@@ -45,13 +49,13 @@ public class HomopolymerAlignment {
         // row (insert)
         int score = 0;
         for (int i = 1; i <= n; i++) {
-            score += scoreFunction.getGapScore(seqFirst[i - 1]); //scoreFunction.getScore(gap, seqFirst[i - 1]);
+            score += scoreFunction.getGapScore(seqFirst[i - 1]);
             matrix[0][i] = score;
         }
         // column (delete)
         score = 0;
         for (int i = 1; i <= m; i++) {
-            score += scoreFunction.getGapScore(seqSecond[i - 1]); //scoreFunction.getScore(seqSecond[i - 1], gap);
+            score += scoreFunction.getGapScore(seqSecond[i - 1]);
             matrix[i][0] = score;
         }
 
@@ -91,6 +95,7 @@ public class HomopolymerAlignment {
                 }
                 StdOut.println();
             }
+            StdOut.println();
         }
 
         return matrix[m][n];

@@ -12,10 +12,11 @@ public class ScoreAlignmentFunction {
     }
 
     public int getScore(Homopolymer hFirst, Homopolymer hSecond) {
-        if (hFirst.nucleotide == hSecond.nucleotide) {
-            return scoreMatrix.getScore(hFirst.nucleotide, hSecond.nucleotide);
-        }
-        return Math.max(hFirst.count, hSecond.count) * scoreMatrix.getScore(hFirst.nucleotide, hSecond.nucleotide);
+        int score = scoreMatrix.getScore(hFirst.nucleotide, hSecond.nucleotide);
+        int max = Math.max(hFirst.count,  hSecond.count);
+        int min = Math.min(hFirst.count, hSecond.count);
+        int delta = max - min;
+        return score * max - Math.abs(score) * delta * delta;
     }
 
     public int getGapScore(Homopolymer h) {
