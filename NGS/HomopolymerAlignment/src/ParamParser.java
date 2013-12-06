@@ -11,6 +11,8 @@ public class ParamParser {
     public static final String LARGE_MODE_KEY   = "--large";
     public static final String THREADS_KEY      = "--threads";
 
+    public static final String README = "readme.txt";
+
     public boolean state = false;
 
     public String inputFilename = "";
@@ -21,7 +23,7 @@ public class ParamParser {
     public int threadCount = 1;
 
     public ParamParser(String[] args) {
-        if (args.length == 0 || args[1].equals("--help") || args[1].equals("?")) {
+        if (args.length == 0 || args[0].equals("--help") || args[0].equals("?") || args[0].equals("-h")) {
             printHelp();
             return;
         }
@@ -65,7 +67,9 @@ public class ParamParser {
     }
 
     public static void printHelp() {
-        //TODO write help
-        StdOut.println("Help");
+        In in = new In(README);
+        while (!in.isEmpty()) {
+            StdOut.println(in.readLine());
+        }
     }
 }
