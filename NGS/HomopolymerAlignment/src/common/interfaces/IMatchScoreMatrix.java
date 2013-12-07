@@ -1,3 +1,5 @@
+package common.interfaces;
+
 /**
  * Interface for match scoring matrix
  *

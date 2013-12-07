@@ -1,4 +1,8 @@
+package homopolymer;
+
 /**
+ * Homopolymer. E.g., GGGGG => nucleotide = G, count = 5
+ *
  * Author: Oleg Yasnev (oyasnev@gmail.com)
  * Date: 18.11.13
  */

@@ -1,3 +1,8 @@
+package common;
+
+import common.interfaces.IMatchScoreMatrix;
+import edu.princeton.cs.introcs.In;
+
 import java.util.HashMap;
 import java.util.Map;
 

@@ -1,3 +1,7 @@
+package homopolymer;
+
+import common.interfaces.IMatchScoreMatrix;
+
 /**
  * Author: Oleg Yasnev (oyasnev@gmail.com)
  * Date: 20.11.13

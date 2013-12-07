@@ -1,3 +1,9 @@
+import tools.Fasta;
+import common.ScoreMatrix;
+import edu.princeton.cs.introcs.StdOut;
+import homopolymer.*;
+import tools.ScoreAlignmentMatrixConverter;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,7 +40,7 @@ public class Main {
 
             StdOut.printf("Writing data to %s\n", paramParser.outputFilename);
 
-            ScoreAlignmentMatrixWriter writer = new ScoreAlignmentMatrixWriter(paramParser.outputFilename,
+            ScoreAlignmentMatrixConverter writer = new ScoreAlignmentMatrixConverter(paramParser.outputFilename,
                         sequences, scoreMatrixFilename, alignment.minScore, alignment.maxScore);
 
             // remove temp score alignment matrix file
@@ -45,7 +51,7 @@ public class Main {
 
             StdOut.printf("Writing data to %s\n", paramParser.outputFilename);
 
-            ScoreAlignmentMatrixWriter writer = new ScoreAlignmentMatrixWriter(paramParser.outputFilename,
+            ScoreAlignmentMatrixConverter writer = new ScoreAlignmentMatrixConverter(paramParser.outputFilename,
                     sequences, alignment.alignMatrix, alignment.minScore, alignment.maxScore);
         }
 

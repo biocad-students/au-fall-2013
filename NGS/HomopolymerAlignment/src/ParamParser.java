@@ -1,3 +1,6 @@
+import edu.princeton.cs.introcs.In;
+import edu.princeton.cs.introcs.StdOut;
+
 /**
  * Author: Oleg Yasnev (oyasnev@gmail.com)
  * Date: 25.11.13

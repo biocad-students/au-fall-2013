@@ -1,27 +1,64 @@
+package homopolymer;
+
+import edu.princeton.cs.introcs.Out;
+import edu.princeton.cs.introcs.StdOut;
+import settings.Config;
+
 import java.util.Date;
 
 /**
+ * Performs pairwise sequences with homopolymers alignment.
+ * Allows multithreading.
+ * Two modes:
+ *      1) Default. Suitable for medium data. Stores the resulting matrix in memory - available in "alignMatrix".
+ *      2) Large. Suitable for large data. Writes the resulting matrix into the output file.
+ *
  * Author: Oleg Yasnev (oyasnev@gmail.com)
  * Date: 20.11.13
  */
 public class HomopolymerAlignment {
+    /**
+     * Size of the resulting matrix. Equals to number of sequences
+     */
     public int size;
+    /**
+     * The resulting matrix. Default mode only.
+     */
     public int[][] alignMatrix;
+    /**
+     * Minimum and maximum score of resultinf matrix
+     */
     public int minScore;
     public int maxScore;
 
     protected HomopolymerSequence[] sequences;
     protected ScoreAlignmentFunction scoreFunction;
 
+    /**
+     * Output for saving the resulting matrix. Large mode only
+     */
     protected Out out;
 
     protected int threadCount;
 
+    /**
+     * Constructor for default mode
+     * @param sequences
+     * @param scoreFunction
+     * @param threadCount
+     */
     public HomopolymerAlignment(HomopolymerSequence[] sequences, ScoreAlignmentFunction scoreFunction, int threadCount) {
         init(sequences, scoreFunction, threadCount);
         align(false);
     }
 
+    /**
+     * Constructor for large mode
+     * @param sequences
+     * @param scoreFunction
+     * @param outputFilename
+     * @param threadCount
+     */
     public HomopolymerAlignment(HomopolymerSequence[] sequences, ScoreAlignmentFunction scoreFunction,
                                 String outputFilename, int threadCount) {
         init(sequences, scoreFunction, threadCount);
@@ -50,6 +87,9 @@ public class HomopolymerAlignment {
         }
     }
 
+    /**
+     * Fill alignMatrix. Default mode only
+     */
     protected void fillAlignMatrix() {
         alignMatrix = new int[size][size];
 
@@ -86,6 +126,9 @@ public class HomopolymerAlignment {
         }
     }
 
+    /**
+     * Alignment in large mode only
+     */
     protected void alignLargeMode() {
         int[][] alignMatrixRows = new int[threadCount][size];
         Thread[] threads = new Thread[threadCount];
@@ -107,7 +150,7 @@ public class HomopolymerAlignment {
             }
             // process results
             for (int j = 0; j < end; j++) {
-                saveAlignRow(alignMatrixRows[j]);
+                writeAlignRow(alignMatrixRows[j]);
                 StdOut.printf("Processed %d sequence(s) of %d (%s)\n", i + j + 1, size, new Date());
             }
 
@@ -115,12 +158,24 @@ public class HomopolymerAlignment {
         }
     }
 
+    /**
+     * Fill one row of the resulting matrix
+     * @param alignRow this row will be filled
+     * @param seqFirst sequence corresponding to the row
+     * @param rowInd   index of the row in the resulting matrix
+     */
     protected void alignRow(int[] alignRow, Homopolymer[] seqFirst, int rowInd) {
         for (int i = rowInd; i < size; i++) {
             alignRow[i] = alignPair(seqFirst, sequences[i].getHomopolymerSequence());
         }
     }
 
+    /**
+     * Align two sequences
+     * @param seqFirst
+     * @param seqSecond
+     * @return alignment score
+     */
     protected int alignPair(Homopolymer[] seqFirst, Homopolymer[] seqSecond) {
         int n = seqFirst.length;
         int m = seqSecond.length;
@@ -186,18 +241,31 @@ public class HomopolymerAlignment {
         return score;
     }
 
-    protected void saveAlignRow(int[] alignRow) {
+    /**
+     * Write one row of the resulting matrix into the output
+     * @param alignRow
+     */
+    protected void writeAlignRow(int[] alignRow) {
         for (int i = 0; i < size; i++) {
             out.printf(" %d", alignRow[i]);
         }
         out.println();
     }
 
+    /**
+     * Thread used in alignment
+     */
     protected class AlignThread implements Runnable {
         protected int[] alignRow;
         protected Homopolymer[] seqFirst;
         protected int rowInd;
 
+        /**
+         * Constructor
+         * @param alignRow one row of the resulting matrix
+         * @param seqFirst sequence
+         * @param rowInd
+         */
         public AlignThread(int[] alignRow, Homopolymer[] seqFirst, int rowInd) {
             this.alignRow = alignRow;
             this.seqFirst = seqFirst;

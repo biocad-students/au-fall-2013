@@ -1,6 +1,13 @@
+package homopolymer;
+
+import common.interfaces.ISequence;
+import settings.Config;
+
 import java.util.ArrayList;
 
 /**
+ * Sequence that also has homopolymer presentation
+ *
  * Author: Oleg Yasnev (oyasnev@gmail.com)
  * Date: 18.11.13
  */
@@ -47,6 +54,7 @@ public class HomopolymerSequence implements ISequence {
             return;
         }
         if (Config.COMBINE_HOMOPOLYMERS) {
+            // combine homopolymers, i.e. "GGGGG" => "G5"
             char nucl = chArr[0];
             int count = 1;
             int i = 1;
@@ -63,6 +71,7 @@ public class HomopolymerSequence implements ISequence {
             }
             arList.add(new Homopolymer(nucl, count));
         } else {
+            // use conventional presentation
             for (char c : chArr) {
                 arList.add(new Homopolymer(c, 1));
             }

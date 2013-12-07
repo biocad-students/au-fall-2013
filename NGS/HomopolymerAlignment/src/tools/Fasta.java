@@ -1,3 +1,9 @@
+package tools;
+
+import common.interfaces.ISequence;
+import common.interfaces.ISequenceFactory;
+import edu.princeton.cs.introcs.In;
+
 import java.util.ArrayList;
 
 /**
