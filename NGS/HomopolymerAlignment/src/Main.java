@@ -1,7 +1,10 @@
-import tools.Fasta;
 import common.ScoreMatrix;
 import edu.princeton.cs.introcs.StdOut;
-import homopolymer.*;
+import homopolymer.HomopolymerAlignment;
+import homopolymer.HomopolymerSequence;
+import homopolymer.HomopolymerSequenceFactory;
+import homopolymer.ScoreAlignmentFunction;
+import tools.Fasta;
 import tools.ScoreAlignmentMatrixConverter;
 
 import java.io.File;
