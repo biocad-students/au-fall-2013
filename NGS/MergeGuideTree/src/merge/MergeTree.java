@@ -1,12 +1,21 @@
 package merge;
 
+import edu.princeton.cs.introcs.In;
+import edu.princeton.cs.introcs.Out;
 import edu.princeton.cs.introcs.StdOut;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
+import sequence.Consensus;
+import sequence.interfaces.ISequence;
+import sequence.interfaces.ISequenceFactory;
 import settings.Config;
+import tools.ClustalO;
+import tools.Fasta;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Author: Oleg Yasnev (oyasnev@gmail.com)
@@ -14,9 +23,20 @@ import java.util.List;
  */
 public class MergeTree {
     protected RootedTree tree;
+    protected Map<String, ISequence> seqMap;
+    protected ClustalO clustalo;
+    protected ISequenceFactory sequenceFactory;
 
-    public MergeTree(RootedTree tree) {
+    protected ArrayList<ISequence> resultSequences;
+
+    protected static final String SEQ_TEMP_FILE = "~merge_tree.tmp";
+    protected static final String ALIGN_SEQ_TEMP_FILE = "~merge_tree_align.tmp";
+
+    public MergeTree(RootedTree tree, Map<String, ISequence> sequenceMap, ClustalO clustalo, ISequenceFactory sequenceFactory) {
         this.tree = tree;
+        this.seqMap = sequenceMap;
+        this.clustalo = clustalo;
+        this.sequenceFactory = sequenceFactory;
         merge();
     }
 
@@ -29,11 +49,26 @@ public class MergeTree {
         }
     }
 
+    /**
+     * Get array list of sequences
+     * @return array list of sequences
+     */
+    public ArrayList<? extends ISequence> getSequences() {
+        return resultSequences;
+    }
+
     protected void merge() {
+        resultSequences = new ArrayList<ISequence>();
         SubtreeInfo subtreeInfo = dfs(tree, tree.getRootNode());
         if (subtreeInfo.canMerge) {
             mergeSubtree(subtreeInfo);
         }
+
+        // remove temp files
+        File file = new File(SEQ_TEMP_FILE);
+        file.delete();
+        file = new File(ALIGN_SEQ_TEMP_FILE);
+        file.delete();
     }
 
     protected SubtreeInfo dfs(RootedTree tree, Node v) {
@@ -78,12 +113,30 @@ public class MergeTree {
         }
     }
 
-    public void mergeSubtree(SubtreeInfo subtreeInfo) {
+    @SuppressWarnings("unchecked")
+    protected void mergeSubtree(SubtreeInfo subtreeInfo) {
         if (Config.DEBUG) {
             for (String leaf : subtreeInfo.leaves) {
                 StdOut.println(leaf);
             }
             StdOut.println("-------------------------------");
+        }
+
+        ISequence[] sequences = new ISequence[subtreeInfo.leaves.size()];
+        for (int i = 0; i < subtreeInfo.leaves.size(); i++) {
+            String leaf = subtreeInfo.leaves.get(i);
+            sequences[i] = seqMap.get(leaf);
+        }
+
+        if (sequences.length > 1) {
+            Fasta.writeSequences(SEQ_TEMP_FILE, sequences);
+            clustalo.run(SEQ_TEMP_FILE, ALIGN_SEQ_TEMP_FILE);
+            ArrayList<ISequence> arList = (ArrayList<ISequence>) Fasta.readSequences(ALIGN_SEQ_TEMP_FILE, sequenceFactory);
+            sequences = new ISequence[arList.size()];
+            arList.toArray(sequences);
+            resultSequences.add(Consensus.getConsensus(sequences, sequenceFactory));
+        } else {
+            resultSequences.add(sequences[0]);
         }
     }
 }

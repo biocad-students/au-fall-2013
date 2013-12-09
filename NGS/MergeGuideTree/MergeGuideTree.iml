@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="stdlib-package" level="project" />
     <orderEntry type="library" name="jebl-0.4" level="project" />
+    <orderEntry type="library" name="org.ini4j:ini4j:0.5.2" level="project" />
   </component>
 </module>
 
