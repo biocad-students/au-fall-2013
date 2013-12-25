@@ -86,10 +86,19 @@ public class MergeTree {
             //      1) Leaf can be merged
             //      2) Tree can be merged if one its subtree is a leaf and second can be merged
             if (!leftSubtree.canMerge || !rightSubtree.canMerge) {
+                if (!leftSubtree.canMerge && !rightSubtree.canMerge) {
+                    subtreeInfo.canMerge = false;
+                } else {
+                    if (leftSubtree.canMerge) {
+                        subtreeInfo.leaves.addAll(leftSubtree.leaves);
+                    } else {
+                        subtreeInfo.leaves.addAll(rightSubtree.leaves);
+                    }
+                }
                 // if at least one subtree cannot be merged - all the tree cannot be merged
-                if (leftSubtree.canMerge) mergeSubtree(leftSubtree);
-                if (rightSubtree.canMerge) mergeSubtree(rightSubtree);
-                subtreeInfo.canMerge = false;
+                //if (leftSubtree.canMerge) mergeSubtree(leftSubtree);
+                //if (rightSubtree.canMerge) mergeSubtree(rightSubtree);
+                //subtreeInfo.canMerge = false;
                 return subtreeInfo;
             } else if (leftSubtree.leaves.size() == 1 || rightSubtree.leaves.size() == 1) {
                 // if one subtree is a leaf and second can be merged - all the tree can be merged
