@@ -27,7 +27,7 @@ public class ScoreMatrix implements IMatchScoreMatrix {
     }
 
     public int getScore(char ch1, char ch2) {
-        return map.get(String.valueOf(ch1) + String.valueOf(ch2));
+        return map.get((String.valueOf(ch1) + String.valueOf(ch2)).toUpperCase());
     }
 
     /**
